@@ -41,10 +41,12 @@
         length(counts[counts == i])
     }
     a <- sapply(i, COUNT, X)
-    G <- a[1]/a[2]
+    Deriv.Ch1 <- gradF(a, i)
+    Deriv.Ch1[is.na(Deriv.Ch1)] <- 0
+    ## G <- a[1]/a[2] # don't need this with bias-corrected code
     ## EstimateS uses basic Chao only if a[2] > 0, and switches to
     ## bias-corrected version only if a[2] == 0. However, we always
-    ## use bias-corrected form. The switchin code is commented out so
+    ## use bias-corrected form. The switching code is commented out so
     ## that it is easy to put back.
 
     ##if (a[2] > 0)
@@ -54,7 +56,6 @@
     S.Chao1 <- S.obs + SSC * a[1]*(a[1]-1) / (a[2]+1)/2
     ##else
     ##    S.Chao1 <- S.obs
-    Deriv.Ch1 <- gradF(a, i)
     ##if (a[2] > 0)
     ##    sd.Chao1 <- sqrt(a[2] * (SSC * (SSC * (G^4/4 + G^3) + G^2/2)))
     ##else if (a[1] > 0)
@@ -64,12 +65,15 @@
                        a[1]^2*a[2]*(a[1]-1)^2/4/(a[2]+1)^4)))
     ##else
     ##    sd.Chao1 <- 0
-    C.ace <- 1 - a[1]/N.rare
+    if (N.rare > 0)
+        C.ace <- 1 - a[1]/N.rare
+    else
+        C.ace <- 1
     i <- 1:length(a)
     thing <- i * (i - 1) * a
     Gam <- sum(thing) * S.rare/(C.ace * N.rare * (N.rare - 1)) - 
         1
-    S.ACE <- S.abund + S.rare/C.ace + max(Gam, 0) * a[1]/C.ace
+    S.ACE <- S.abund + S.rare/C.ace + max(Gam, 0, na.rm=TRUE) * a[1]/C.ace
     sd.ACE <- sqrt(sum(Deriv.Ch1 %*% t(Deriv.Ch1) * (diag(a) - 
                                                      a %*% t(a)/S.ACE)))
     out <- list(S.obs = S.obs, S.chao1 = S.Chao1, se.chao1 = sd.Chao1, 
