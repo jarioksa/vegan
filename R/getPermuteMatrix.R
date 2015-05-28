@@ -16,6 +16,7 @@
     }
     ## apply 'strata', but only if possible: ignore silently other cases
     if (!missing(strata) && !is.null(strata)) {
+        warning("'strata' are deprecated: use how() to define permutation strategy")
         if (inherits(perm, "how") && is.null(getBlocks(perm)))
             setBlocks(perm) <- strata
     }
