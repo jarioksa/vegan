@@ -330,6 +330,195 @@ static void boostedqswap(int *m, int nr, int nc, int *work)
     } /* while(ss > tot) */
 }
 
+/* greedyqswap is similar to quasiswap except that it always takes the
+ * first row and column from rows and columns that should be
+ * reduced. This does not guarantee that the 2x2 matrix has >1 entry,
+ * but makes it more likely. This needs a lot of more bookkeeping. */
+
+static void greedyqswap(int *m, int *nr, int *nc, int *thin, int *rsum,
+			int *csum, int *rss, int *css, int *rind, int *cind)
+{
+    int i, j, ind, n, mtot, ss, ss1, rlen, clen,
+	row[2], col[2], nr1, nc1, a, b, c, d;
+    size_t intcheck;
+
+    nr1 = (*nr) - 1;
+    nc1 = (*nc) - 1;
+
+    /* Get matrix total 'mtot' and sum-of-squares 'ss' */
+
+    n = (*nr) * (*nc);
+
+    /* collect total and sum of squares for the whole matrix, rows and
+     * columns */
+    memset(rss, 0, (*nr) * sizeof(int));
+    memset(css, 0, (*nc) * sizeof(int));
+    for (i = 0, mtot = 0, ss = 0, ind = 0; i < (*nr); i++) {
+	for (j = 0; j < (*nc); j++) {
+	    mtot += m[ind];
+	    ss1 = m[ind] * m[ind];
+	    ss += ss1;
+	    rss[i] += ss1;
+	    css[j] += ss1;
+	    ind++;
+	}
+    }
+    /* Indices of rows and columns that have >1 values */
+    for(i = 0, rlen = -1; i < (*nr); i++)
+	if (rss[i] > rsum[i])
+	    rind[++rlen] = i;
+    for(j = 0, clen = -1; j < (*nc); j++)
+	if (css[j] > csum[j])
+	    cind[++clen] = j;
+ 
+    /* Get R RNG in the calling C function */
+    /* GetRNGstate(); */
+
+    /* Quasiswap while there are entries > 1 */
+
+    intcheck  = 0; /* check interrupts */
+    while (ss > mtot) {
+	for (i = 0; i < *thin; i++) {
+	    /* Take first element from rows/columns which have >1
+	     * values, and second element from any row/column */
+	    if (rlen < 0) { /* none > 1 */
+		I2RAND(row, nr1);
+	    } else {
+		row[0] = rind[IRAND(rlen)];
+		do { row[1] = IRAND(nr1); } while (row[1] == row[0]);
+	    }
+	    if (clen < 0) {
+		I2RAND(col, nc1);
+	    } else {
+		col[0] = cind[IRAND(clen)];
+		do { col[1] = IRAND(nc1); } while (col[1] == col[0]);
+	    }
+	    /* a,b,c,d notation for a 2x2 table, in column-major mode
+	     * the elements are {a, c, b, d} */
+	    a = INDX(row[0], col[0], *nr);
+	    b = INDX(row[0], col[1], *nr);
+	    c = INDX(row[1], col[0], *nr);
+	    d = INDX(row[1], col[1], *nr);
+	    if (m[a] > 0 && m[d] > 0 && m[a] + m[d] - m[b] - m[c] >= 2) {
+		/* update rss & css and rind & cind when needed */
+		/* first row */
+		ss1 = 2 * (m[a] - m[b]) - 2;
+		if (ss1 > 0)  { /* rss decreases */
+		    if (rss[row[0]] - ss1 == 0) /* reduced to binary */
+			rind[row[0]] = rind[rlen--]; /* remove from rind */
+		}
+		/* rss can increase and a binary row can get >1 values */
+		if (ss1 < 0) {
+		    if (rsum[row[0]] == rss[row[0]]) /* was OK, ain't no more */
+			rind[++rlen] = row[0]; /* add to rind */
+		}
+		rss[row[0]] -= ss1;
+		/* second row */
+		ss1 = 2 * (m[d] - m[c]) - 2;
+		if (ss1 > 0)  { 
+		    if (rss[row[1]] - ss1 == 0)
+			rind[row[1]] = rind[rlen--];
+		}
+		if (ss1 < 0) {
+		    if (rsum[row[1]] == rss[row[1]])
+			rind[++rlen] = row[1];
+		}
+		rss[row[1]] -= ss1;
+		/* first column */
+		ss1 = 2 * (m[a] - m[c]) - 2;
+		if (ss1 > 0)  {
+		    if (css[col[0]] - ss1 == 0)
+			cind[col[0]] = cind[clen--]; 
+		}
+		if (ss1 < 0) {
+		    if (csum[col[0]] == css[col[0]]) 
+			cind[++clen] = col[0];
+		}
+		css[col[0]] -= ss1;
+		/* second column */
+		ss1 = 2 * (m[d] - m[b]) - 2;
+		if (ss1 > 0)  {
+		    if (css[col[1]] - ss1 == 0) 
+			cind[col[1]] = cind[clen--];
+		}
+		if (ss1 < 0) {
+		    if (csum[col[1]] == css[col[1]])
+			cind[++clen] = col[1];
+		}
+		css[col[1]] -= ss1;
+		/* update overall ss */
+		ss -= 2 * (m[a] + m[d] - m[b] - m[c] - 2);
+		/* update 2x2 submatrix */
+		m[a]--;
+		m[d]--;
+		m[b]++;
+		m[c]++;
+	    } else if (m[b] > 0 && m[c] > 0 &&
+		       m[b] + m[c] - m[a] - m[d] >= 2) {
+		/* update rss & css and rind & cind when needed */
+		/* first row */
+		ss1 = 2 * (m[b] - m[a]) - 2;
+		if (ss1 > 0)  { /* rss decreases */
+		    if (rss[row[0]] - ss1 == 0) /* reduced to binary */
+			rind[row[0]] = rind[rlen--]; /* remove from rind */
+		}
+		/* rss can increase and a binary row can get >1 values */
+		if (ss1 < 0) {
+		    if (rsum[row[0]] == rss[row[0]]) /* was OK, ain't no more */
+			rind[++rlen] = row[0]; /* add to rind */
+		}
+		rss[row[0]] -= ss1;
+		/* second row */
+		ss1 = 2 * (m[c] - m[d]) - 2;
+		if (ss1 > 0)  { 
+		    if (rss[row[1]] - ss1 == 0)
+			rind[row[1]] = rind[rlen--];
+		}
+		if (ss1 < 0) {
+		    if (rsum[row[1]] == rss[row[1]])
+			rind[++rlen] = row[1];
+		}
+		rss[row[1]] -= ss1;
+		/* first column */
+		ss1 = 2 * (m[c] - m[a]) - 2;
+		if (ss1 > 0)  {
+		    if (css[col[0]] - ss1 == 0)
+			cind[col[0]] = cind[clen--]; 
+		}
+		if (ss1 < 0) {
+		    if (csum[col[0]] == css[col[0]]) 
+			cind[++clen] = col[0];
+		}
+		css[col[0]] -= ss1;
+		/* second column */
+		ss1 = 2 * (m[b] - m[d]) - 2;
+		if (ss1 > 0)  {
+		    if (css[col[1]] - ss1 == 0) 
+			cind[col[1]] = cind[clen--];
+		}
+		if (ss1 < 0) {
+		    if (csum[col[1]] == css[col[1]])
+			cind[++clen] = col[1];
+		}
+		css[col[1]] -= ss1;
+		/* update overall ss */
+		ss -= 2 * (m[b] + m[c] - m[a] - m[d] - 2);
+		m[a]++;
+		m[d]++;
+		m[b]--;
+		m[c]--;
+	    }
+	}
+	/* interrupt? */
+	if (intcheck % 10000 == 9999)
+	    R_CheckUserInterrupt();
+	intcheck++;
+    }
+
+    /* Set R RNG in the calling function */
+    /* PutRNGstate(); */
+}
+
 /* 'swapcount' is a C translation of Peter Solymos's R code. It is
  * similar to 'swap', but can swap > 1 values and so works for
  * quantitative (count) data.
