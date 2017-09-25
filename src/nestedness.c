@@ -335,26 +335,26 @@ static void boostedqswap(int *m, int nr, int nc, int *work)
  * reduced. This does not guarantee that the 2x2 matrix has >1 entry,
  * but makes it more likely. This needs a lot of more bookkeeping. */
 
-static void greedyqswap(int *m, int *nr, int *nc, int *thin, int *rsum,
+static void greedyqswap(int *m, int nr, int nc, int thin, int *rsum,
 			int *csum, int *rss, int *css, int *rind, int *cind)
 {
     int i, j, ind, n, mtot, ss, ss1, rlen, clen,
 	row[2], col[2], nr1, nc1, a, b, c, d;
     size_t intcheck;
 
-    nr1 = (*nr) - 1;
-    nc1 = (*nc) - 1;
+    nr1 = nr - 1;
+    nc1 = nc - 1;
 
     /* Get matrix total 'mtot' and sum-of-squares 'ss' */
 
-    n = (*nr) * (*nc);
+    n = nr * nc;
 
     /* collect total and sum of squares for the whole matrix, rows and
      * columns */
-    memset(rss, 0, (*nr) * sizeof(int));
-    memset(css, 0, (*nc) * sizeof(int));
-    for (i = 0, mtot = 0, ss = 0, ind = 0; i < (*nr); i++) {
-	for (j = 0; j < (*nc); j++) {
+    memset(rss, 0, nr * sizeof(int));
+    memset(css, 0, nc * sizeof(int));
+    for (i = 0, mtot = 0, ss = 0, ind = 0; i < nr; i++) {
+	for (j = 0; j < nc; j++) {
 	    mtot += m[ind];
 	    ss1 = m[ind] * m[ind];
 	    ss += ss1;
@@ -364,10 +364,10 @@ static void greedyqswap(int *m, int *nr, int *nc, int *thin, int *rsum,
 	}
     }
     /* Indices of rows and columns that have >1 values */
-    for(i = 0, rlen = -1; i < (*nr); i++)
+    for(i = 0, rlen = -1; i < nr; i++)
 	if (rss[i] > rsum[i])
 	    rind[++rlen] = i;
-    for(j = 0, clen = -1; j < (*nc); j++)
+    for(j = 0, clen = -1; j < nc; j++)
 	if (css[j] > csum[j])
 	    cind[++clen] = j;
  
@@ -378,7 +378,7 @@ static void greedyqswap(int *m, int *nr, int *nc, int *thin, int *rsum,
 
     intcheck  = 0; /* check interrupts */
     while (ss > mtot) {
-	for (i = 0; i < *thin; i++) {
+	for (i = 0; i < thin; i++) {
 	    /* Take first element from rows/columns which have >1
 	     * values, and second element from any row/column */
 	    if (rlen < 0) { /* none > 1 */
@@ -395,10 +395,10 @@ static void greedyqswap(int *m, int *nr, int *nc, int *thin, int *rsum,
 	    }
 	    /* a,b,c,d notation for a 2x2 table, in column-major mode
 	     * the elements are {a, c, b, d} */
-	    a = INDX(row[0], col[0], *nr);
-	    b = INDX(row[0], col[1], *nr);
-	    c = INDX(row[1], col[0], *nr);
-	    d = INDX(row[1], col[1], *nr);
+	    a = INDX(row[0], col[0], nr);
+	    b = INDX(row[0], col[1], nr);
+	    c = INDX(row[1], col[0], nr);
+	    d = INDX(row[1], col[1], nr);
 	    if (m[a] > 0 && m[d] > 0 && m[a] + m[d] - m[b] - m[c] >= 2) {
 		/* update rss & css and rind & cind when needed */
 		/* first row */
