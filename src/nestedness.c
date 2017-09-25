@@ -1156,10 +1156,8 @@ SEXP do_rcfill(SEXP n, SEXP rs, SEXP cs)
 #define LOUD 0
 #endif /* LOUD */
 
-
-#if RESET
 /* return index of val in set or EMPTY if not found -- support
- * function for backtrack. */
+ * function for backtrack & greedyqswap */
 
 static int imatch(int val, int *set, int len)
 {
@@ -1170,7 +1168,7 @@ static int imatch(int val, int *set, int len)
     /* not found? */
     return EMPTY;
 }
-#endif /* RESET */
+
 
 static void backtrack(int *out, int *rowsum, int *colsum, int fill,
 		      int nr, int nc, int *rfill, int *cfill, int *ind)
