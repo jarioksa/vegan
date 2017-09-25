@@ -381,13 +381,13 @@ static void greedyqswap(int *m, int nr, int nc, int thin, int *rsum,
 	for (i = 0; i < thin; i++) {
 	    /* Take first element from rows/columns which have >1
 	     * values, and second element from any row/column */
-	    if (rlen < 0) { /* none > 1 */
+	    if (i > 0 || rlen < 0) { /* none > 1  or thinning */
 		I2RAND(row, nr1);
 	    } else {
 		row[0] = rind[IRAND(rlen)];
 		do { row[1] = IRAND(nr1); } while (row[1] == row[0]);
 	    }
-	    if (clen < 0) {
+	    if (i > 0 || clen < 0) {
 		I2RAND(col, nc1);
 	    } else {
 		col[0] = cind[IRAND(clen)];
