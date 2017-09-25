@@ -335,6 +335,9 @@ static void boostedqswap(int *m, int nr, int nc, int *work)
  * reduced. This does not guarantee that the 2x2 matrix has >1 entry,
  * but makes it more likely. This needs a lot of more bookkeeping. */
 
+/* imatch is defined later in this file */
+static int imatch(int, int*, int);
+
 static void greedyqswap(int *m, int nr, int nc, int thin, int *rsum,
 			int *csum, int *rss, int *css, int *rind, int *cind)
 {
@@ -353,8 +356,8 @@ static void greedyqswap(int *m, int nr, int nc, int thin, int *rsum,
      * columns */
     memset(rss, 0, nr * sizeof(int));
     memset(css, 0, nc * sizeof(int));
-    for (i = 0, mtot = 0, ss = 0, ind = 0; i < nr; i++) {
-	for (j = 0; j < nc; j++) {
+    for (j = 0, mtot = 0, ss = 0, ind = 0; j < nc; j++) {
+	for (i = 0; i < nr; i++) {
 	    mtot += m[ind];
 	    ss1 = m[ind] * m[ind];
 	    ss += ss1;
@@ -371,9 +374,6 @@ static void greedyqswap(int *m, int nr, int nc, int thin, int *rsum,
 	if (css[j] > csum[j])
 	    cind[++clen] = j;
  
-    /* Get R RNG in the calling C function */
-    /* GetRNGstate(); */
-
     /* Quasiswap while there are entries > 1 */
 
     intcheck  = 0; /* check interrupts */
@@ -404,8 +404,8 @@ static void greedyqswap(int *m, int nr, int nc, int thin, int *rsum,
 		/* first row */
 		ss1 = 2 * (m[a] - m[b]) - 2;
 		if (ss1 > 0)  { /* rss decreases */
-		    if (rss[row[0]] - ss1 == 0) /* reduced to binary */
-			rind[row[0]] = rind[rlen--]; /* remove from rind */
+		    if (rss[row[0]] - ss1 == rsum[row[0]]) /* reduced to binary */
+			rind[imatch(row[0], rind, nr)] = rind[rlen--]; /*remove*/
 		}
 		/* rss can increase and a binary row can get >1 values */
 		if (ss1 < 0) {
@@ -416,8 +416,8 @@ static void greedyqswap(int *m, int nr, int nc, int thin, int *rsum,
 		/* second row */
 		ss1 = 2 * (m[d] - m[c]) - 2;
 		if (ss1 > 0)  { 
-		    if (rss[row[1]] - ss1 == 0)
-			rind[row[1]] = rind[rlen--];
+		    if (rss[row[1]] - ss1 == rsum[row[1]])
+			rind[imatch(row[1], rind, nr)] = rind[rlen--];
 		}
 		if (ss1 < 0) {
 		    if (rsum[row[1]] == rss[row[1]])
@@ -427,8 +427,8 @@ static void greedyqswap(int *m, int nr, int nc, int thin, int *rsum,
 		/* first column */
 		ss1 = 2 * (m[a] - m[c]) - 2;
 		if (ss1 > 0)  {
-		    if (css[col[0]] - ss1 == 0)
-			cind[col[0]] = cind[clen--]; 
+		    if (css[col[0]] - ss1 == csum[col[0]])
+			cind[imatch(col[0], cind, nc)] = cind[clen--]; 
 		}
 		if (ss1 < 0) {
 		    if (csum[col[0]] == css[col[0]]) 
@@ -438,8 +438,8 @@ static void greedyqswap(int *m, int nr, int nc, int thin, int *rsum,
 		/* second column */
 		ss1 = 2 * (m[d] - m[b]) - 2;
 		if (ss1 > 0)  {
-		    if (css[col[1]] - ss1 == 0) 
-			cind[col[1]] = cind[clen--];
+		    if (css[col[1]] - ss1 == csum[col[1]]) 
+			cind[imatch(col[1], cind, nc)] = cind[clen--];
 		}
 		if (ss1 < 0) {
 		    if (csum[col[1]] == css[col[1]])
@@ -459,8 +459,8 @@ static void greedyqswap(int *m, int nr, int nc, int thin, int *rsum,
 		/* first row */
 		ss1 = 2 * (m[b] - m[a]) - 2;
 		if (ss1 > 0)  { /* rss decreases */
-		    if (rss[row[0]] - ss1 == 0) /* reduced to binary */
-			rind[row[0]] = rind[rlen--]; /* remove from rind */
+		    if (rss[row[0]] - ss1 == rsum[row[0]]) /* reduced to binary */
+			rind[imatch(row[0], rind, nr)] = rind[rlen--];
 		}
 		/* rss can increase and a binary row can get >1 values */
 		if (ss1 < 0) {
@@ -471,8 +471,8 @@ static void greedyqswap(int *m, int nr, int nc, int thin, int *rsum,
 		/* second row */
 		ss1 = 2 * (m[c] - m[d]) - 2;
 		if (ss1 > 0)  { 
-		    if (rss[row[1]] - ss1 == 0)
-			rind[row[1]] = rind[rlen--];
+		    if (rss[row[1]] - ss1 == rsum[row[1]])
+			rind[imatch(row[1], rind, nr)] = rind[rlen--];
 		}
 		if (ss1 < 0) {
 		    if (rsum[row[1]] == rss[row[1]])
@@ -482,8 +482,8 @@ static void greedyqswap(int *m, int nr, int nc, int thin, int *rsum,
 		/* first column */
 		ss1 = 2 * (m[c] - m[a]) - 2;
 		if (ss1 > 0)  {
-		    if (css[col[0]] - ss1 == 0)
-			cind[col[0]] = cind[clen--]; 
+		    if (css[col[0]] - ss1 == csum[col[0]])
+			cind[imatch(col[0], cind, nc)] = cind[clen--]; 
 		}
 		if (ss1 < 0) {
 		    if (csum[col[0]] == css[col[0]]) 
@@ -493,8 +493,8 @@ static void greedyqswap(int *m, int nr, int nc, int thin, int *rsum,
 		/* second column */
 		ss1 = 2 * (m[b] - m[d]) - 2;
 		if (ss1 > 0)  {
-		    if (css[col[1]] - ss1 == 0) 
-			cind[col[1]] = cind[clen--];
+		    if (css[col[1]] - ss1 == csum[col[1]]) 
+			cind[imatch(col[1], cind, nc)] = cind[clen--];
 		}
 		if (ss1 < 0) {
 		    if (csum[col[1]] == css[col[1]])
@@ -1018,6 +1018,46 @@ SEXP do_boostedqswap(SEXP x, SEXP nsim)
     }
     PutRNGstate();
     UNPROTECT(1);
+    return x;
+}
+
+/* call greedyqswap: this implementation needs a lot of bookkeeping
+ * and work arrays that are allocated here */
+
+SEXP do_greedyqswap(SEXP x, SEXP nsim, SEXP thin, SEXP rs, SEXP cs)
+{
+    int nr = nrows(x), nc = ncols(x), nmat = asInteger(nsim),
+	ithin = asInteger(thin);
+    size_t i, N = nr * nc;
+
+    /* check and coerce */
+    if (TYPEOF(x) != INTSXP)
+	x = coerceVector(x, INTSXP);
+    PROTECT(x);
+    int *ix = INTEGER(x);
+    if (TYPEOF(rs) != INTSXP)
+	rs = coerceVector(rs, INTSXP);
+    PROTECT(rs);
+    int *rsum = INTEGER(rs);
+    if (TYPEOF(cs) != INTSXP)
+	cs = coerceVector(cs, INTSXP);
+    PROTECT(rs);
+    int *csum = INTEGER(cs);
+
+    /* allocate work vectors */
+    int *rss = (int *) R_alloc(nr, sizeof(int));
+    int *css = (int *) R_alloc(nc, sizeof(int));
+    int *rind = (int *) R_alloc(nr, sizeof(int));
+    int *cind = (int *) R_alloc(nc, sizeof(int));
+
+    /* work */
+    GetRNGstate();
+    for (i = 0; i < nmat; i++) {
+	greedyqswap(ix + i*N, nr, nc, ithin, rsum, csum, rss, css, rind, cind);
+    }
+    PutRNGstate();
+
+    UNPROTECT(3);
     return x;
 }
 
