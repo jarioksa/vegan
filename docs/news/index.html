@@ -40,8 +40,8 @@
 <h2 class="pkg-version" data-toc-text="2.7-0" id="vegan-27-0-in-development">vegan 2.7-0 (in development)<a class="anchor" aria-label="anchor" href="#vegan-27-0-in-development"></a></h2>
 <div class="section level3">
 <h3 id="installation-2-7-0">Installation<a class="anchor" aria-label="anchor" href="#installation-2-7-0"></a></h3>
-<ul><li>
-<strong>vegan</strong> no longer suggests <strong>tcltk</strong>, but suggests <strong>vegan3d</strong> (version 1.3-0). See <code>orditkplot</code> in section Deprecated and Defunct.</li>
+<ul><li><p><strong>vegan</strong> no longer depends on <strong>lattice</strong>, but only imports <strong>lattice</strong> functions. The <strong>lattice</strong> package is no longer automatically loaded. To use <strong>lattice</strong> functions directly, you must first attach the package with <code><a href="https://lattice.r-forge.r-project.org/" class="external-link">library(lattice)</a></code>.</p></li>
+<li><p><strong>vegan</strong> no longer suggests <strong>tcltk</strong>, but suggests <strong>vegan3d</strong> (version 1.3-0). See <code>orditkplot</code> in section Deprecated and Defunct.</p></li>
 </ul></div>
 <div class="section level3">
 <h3 id="new-functions-2-7-0">New Functions<a class="anchor" aria-label="anchor" href="#new-functions-2-7-0"></a></h3>
@@ -50,6 +50,7 @@
 <p>The function is still experimental. In particular the user interface may need development. Comments are welcome.</p>
 </li>
 <li><p><code>centredist</code>: new functions to find distances of points to their group centroids in <code>betadisper</code> or in several ordination methods (<code>cca</code>, <code>rda</code>, <code>dbrda</code>, <code>wcmdscale</code>). Functions can find (weighted) Euclidean or Mahalanobis distances. See (<a href="https://stackoverflow.com/questions/77391007/" class="external-link uri">https://stackoverflow.com/questions/77391007/</a>) and issue <a href="https://github.com/vegandevs/vegan/issues/606" class="external-link">#606</a>.</p></li>
+<li><p><code>permulattice</code>: new function to use lattice graphics for <code>permustats</code> results without need to first issue <code><a href="https://lattice.r-forge.r-project.org/" class="external-link">library(lattice)</a></code>.</p></li>
 </ul></div>
 <div class="section level3">
 <h3 id="new-features-2-7-0">New Features<a class="anchor" aria-label="anchor" href="#new-features-2-7-0"></a></h3>
@@ -62,15 +63,10 @@
 </li>
 <li><p><code>ordipointlabel</code> can be used in pipe. Function gained argument <code>label</code> that allows changing plotted text, and a function <code>labels</code> that return the current labels. The optimization rules were changed to give a slight preference for putting labels outwards from origin but avoiding corner positions.</p></li>
 <li><p><code>orditorp</code> can be used in pipe.</p></li>
-<li><p><code>vegemite</code> and <code>tabasco</code> can now <code>use</code> a factor to show a classification. The factor levels and sites within levels can be reordered to give a diagonal pattern, as default in code <code>tabasco</code> and in <code>vegemite</code> with new argument <code>diagonalize = TRUE</code> (defaults <code>FALSE</code>). With the same argument, <code>vegemite</code> can also reorder dendrogram (or tree) to give a diagonal pattern. If <code>coverscale</code> is used, all internal calculations for ordering rows and columns will be based on scaled data.</p></li>
+<li><p><code>densityplot.permustats</code> did not know argument <code>observed</code> to control including and showing the observed statistic.</p></li>
+<li><p><code>vegemite</code> and <code>tabasco</code> can now <code>use</code> a factor to show a classification. The factor levels and sites within levels can be reordered to give a diagonal pattern, as default in <code>tabasco</code> and in <code>vegemite</code> with new argument <code>diagonalize = TRUE</code> (defaults <code>FALSE</code>). With the same argument, <code>vegemite</code> can also reorder dendrogram (or tree) to give a diagonal pattern. If <code>coverscale</code> is used, all internal calculations for ordering rows and columns will be based on scaled data.</p></li>
 <li><p><code>make.cepnames</code> was completely re-designed and is much more flexible with enhanced user-control. The function is now based solely on <code>abbreviate</code>.</p></li>
 <li><p><code>wascores</code> can now calculate (unbiased) weighted standard deviation of weighted averages with argument <code>stdev = TRUE</code>.</p></li>
-</ul></div>
-<div class="section level3">
-<h3 id="bug-fixes-2-7-0">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-2-7-0"></a></h3>
-<ul><li><p><code>anova.cca(..., by="margin")</code> failed when a constraint was completely aliased by conditions. See <a href="https://github.com/vegandevs/vegan/pull/701" class="external-link">#701</a>.</p></li>
-<li><p><code>envfit</code> failed when ordination scores were given in a plain matrix instead of a complex ordination result object. Issue <a href="https://github.com/vegandevs/vegan/issues/713" class="external-link">#713</a>.</p></li>
-<li><p><code>vegemite</code> dropped dimensions when only one site or species was requested.</p></li>
 </ul></div>
 <div class="section level3">
 <h3 id="deprecated-and-defunct-2-7-0">Deprecated and Defunct<a class="anchor" aria-label="anchor" href="#deprecated-and-defunct-2-7-0"></a></h3>
@@ -78,6 +74,25 @@
 <li><p><code>summary.decorana</code> is defunct. It did nothing useful, but you can extract the same information with <code>scores</code> and <code>weights</code>.</p></li>
 <li><p><code>orditkplot</code> code was removed, but we try to launch <code><a href="https://rdrr.io/pkg/vegan3d/man/orditkplot.html" class="external-link">vegan3d::orditkplot</a></code> loudly (with a deprecation message to go to <strong>vegan3d</strong>). <em>This is experimental, and we may go to direct error, depending on user experience: please comment!</em></p></li>
 <li><p>relic function <code>vegandocs</code> is officially defunct. Better tools to read <strong>vegan</strong> documentation are <code>browseVignettes("vegan")</code> and <code>news(package="vegan")</code>.</p></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="2.6-10" id="vegan-26-10">vegan 2.6-10<a class="anchor" aria-label="anchor" href="#vegan-26-10"></a></h2><p class="text-muted">CRAN release: 2025-01-29</p>
+<div class="section level3">
+<h3 id="startup-2-6-10">Startup<a class="anchor" aria-label="anchor" href="#startup-2-6-10"></a></h3>
+<ul><li>Prints startup message (“This is vegan 2.6-10”) only in interactive sessions. Version number is no longer shown in package checks and other scripts.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-2-6-10">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-2-6-10"></a></h3>
+<ul><li><p><code>anova.cca(..., by="margin")</code> failed when a constraint was completely aliased by conditions. See <a href="https://github.com/vegandevs/vegan/pull/701" class="external-link">#701</a>.</p></li>
+<li>
+<p><code>envfit</code> failed when ordination scores were given in a plain matrix instead of a complex ordination result object. Issue <a href="https://github.com/vegandevs/vegan/issues/713" class="external-link">#713</a>.</p>
+<p><code>envfit</code> could fail when it was called with only one environmental variable <em>without</em> formula interface. Formula interface worked correctly. Issue <a href="https://github.com/vegandevs/vegan/issues/720" class="external-link">#720</a>.</p>
+</li>
+<li>
+<p><code>vegemite</code> dropped dimensions when only one site or species was requested.</p>
+<p><code>vegemite</code> could fail with variable lengths of row names (SU names).</p>
+</li>
 </ul></div>
 </div>
     <div class="section level2">
